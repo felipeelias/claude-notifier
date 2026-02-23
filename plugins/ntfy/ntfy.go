@@ -65,6 +65,9 @@ func buildTemplateContext(notif notifier.Notification, vars map[string]string) m
 	}
 	// User vars (title-cased). Claude Code fields take precedence.
 	for k, v := range vars {
+		if k == "" {
+			continue
+		}
 		key := strings.ToUpper(k[:1]) + k[1:]
 		if _, exists := ctx[key]; !exists {
 			ctx[key] = v
