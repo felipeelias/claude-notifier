@@ -8,6 +8,7 @@ import (
 
 	// Register plugins via init()
 	_ "github.com/felipeelias/claude-notifier/plugins/ntfy"
+	_ "github.com/felipeelias/claude-notifier/plugins/terminalnotifier"
 )
 
 var version = "dev"
