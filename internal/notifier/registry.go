@@ -25,7 +25,11 @@ func (r *Registry) Register(name string, f Factory) error {
 	return nil
 }
 
-// All returns all registered factories.
+// All returns a copy of all registered factories.
 func (r *Registry) All() map[string]Factory {
-	return r.factories
+	cp := make(map[string]Factory, len(r.factories))
+	for k, v := range r.factories {
+		cp[k] = v
+	}
+	return cp
 }
