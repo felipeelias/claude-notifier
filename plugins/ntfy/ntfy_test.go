@@ -162,3 +162,132 @@ func TestNtfyTemplateBadTemplate(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "rendering message template")
 }
+
+func TestNtfyAllHeaders(t *testing.T) {
+	var gotHeaders http.Header
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:      srv.URL,
+		Message:  "{{.Message}}",
+		Title:    "{{.Title}}",
+		Priority: "high",
+		Tags:     "robot,warning",
+		Icon:     "https://example.com/icon.png",
+		Click:    "https://example.com",
+		Attach:   "https://example.com/file.zip",
+		Filename: "report.zip",
+		Email:    "user@example.com",
+		Delay:    "30m",
+		Actions:  "view, Open, https://example.com",
+		Markdown: true,
+	}
+	err := p.Send(context.Background(), notifier.Notification{
+		Message: "hi",
+		Title:   "test",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "high", gotHeaders.Get("Priority"))
+	assert.Equal(t, "robot,warning", gotHeaders.Get("Tags"))
+	assert.Equal(t, "https://example.com/icon.png", gotHeaders.Get("X-Icon"))
+	assert.Equal(t, "https://example.com", gotHeaders.Get("X-Click"))
+	assert.Equal(t, "https://example.com/file.zip", gotHeaders.Get("X-Attach"))
+	assert.Equal(t, "report.zip", gotHeaders.Get("X-Filename"))
+	assert.Equal(t, "user@example.com", gotHeaders.Get("X-Email"))
+	assert.Equal(t, "30m", gotHeaders.Get("X-Delay"))
+	assert.Equal(t, "view, Open, https://example.com", gotHeaders.Get("X-Actions"))
+	assert.Equal(t, "yes", gotHeaders.Get("X-Markdown"))
+}
+
+func TestNtfyMarkdownDisabled(t *testing.T) {
+	var gotHeaders http.Header
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:      srv.URL,
+		Message:  "{{.Message}}",
+		Title:    "{{.Title}}",
+		Markdown: false,
+	}
+	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	require.NoError(t, err)
+	assert.Empty(t, gotHeaders.Get("X-Markdown"))
+}
+
+func TestNtfyBasicAuth(t *testing.T) {
+	var gotHeaders http.Header
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:      srv.URL,
+		Message:  "{{.Message}}",
+		Title:    "{{.Title}}",
+		Username: "admin",
+		Password: "secret",
+	}
+	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	require.NoError(t, err)
+	assert.Contains(t, gotHeaders.Get("Authorization"), "Basic ")
+}
+
+func TestNtfyTokenOverridesBasicAuth(t *testing.T) {
+	var gotHeaders http.Header
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:      srv.URL,
+		Message:  "{{.Message}}",
+		Title:    "{{.Title}}",
+		Token:    "tk_secret",
+		Username: "admin",
+		Password: "secret",
+	}
+	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer tk_secret", gotHeaders.Get("Authorization"))
+}
+
+func TestNtfyVarCollision(t *testing.T) {
+	var gotBody string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	// User var "Message" should NOT override the Claude Code field
+	p := &ntfy.Ntfy{
+		URL:     srv.URL,
+		Message: "{{.Message}}",
+		Title:   "{{.Title}}",
+		Vars:    map[string]string{"Message": "overridden"},
+	}
+	err := p.Send(context.Background(), notifier.Notification{
+		Message: "original",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "original", gotBody)
+}
