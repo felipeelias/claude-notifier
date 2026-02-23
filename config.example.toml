@@ -2,28 +2,64 @@
 # Place this file at ~/.config/claude-notifier/config.toml
 
 [global]
-# Timeout for each plugin's Send call
+## Timeout for each plugin's Send call
 timeout = "10s"
 
-# ntfy push notifications (https://docs.ntfy.sh)
+## ntfy push notifications
+## https://docs.ntfy.sh
 [[notifiers.ntfy]]
+
+## ntfy server URL including topic (required)
 url = "https://ntfy.sh/my-topic"
+
+## Enable markdown formatting (web app only)
 # markdown = true
+
+## Go template for the message body
+## Available variables: {{.Message}}, {{.Title}}, {{.Project}}, {{.Cwd}},
+## {{.NotificationType}}, {{.SessionID}}, {{.TranscriptPath}}
+## Custom variables from [notifiers.ntfy.vars] are also available, title-cased
 # message = "{{.Message}}"
+
+## Go template for the notification title
 # title = "Claude Code ({{.Project}})"
+
+## Message priority: min, low, default, high, urgent
 # priority = ""
+
+## Comma-separated emoji tags (e.g. "robot,warning")
 # tags = ""
+
+## Notification icon URL (JPEG/PNG)
 # icon = ""
+
+## URL opened when tapping the notification
 # click = ""
+
+## URL of file to attach
 # attach = ""
+
+## Override attachment filename
 # filename = ""
+
+## Email address for notification forwarding
 # email = ""
+
+## Scheduled delivery (e.g. "30m", "2h", "tomorrow 10am")
 # delay = ""
+
+## Action buttons (ntfy actions format)
+## https://docs.ntfy.sh/publish/#action-buttons
 # actions = ""
+
+## Access token for authentication (Bearer)
 # token = ""
+
+## Username and password for basic authentication
 # username = ""
 # password = ""
-#
-# User-defined template variables
+
+## User-defined template variables
+## Keys are title-cased for template access (env -> {{.Env}})
 # [notifiers.ntfy.vars]
 # env = "production"
