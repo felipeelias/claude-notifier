@@ -32,7 +32,7 @@ func (n *Ntfy) Name() string { return "ntfy" }
 func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.URL, strings.NewReader(notif.Message))
 	if err != nil {
-		return fmt.Errorf("ntfy: creating request: %w", err)
+		return fmt.Errorf("creating request: %w", err)
 	}
 
 	if notif.Title != "" {
@@ -50,7 +50,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("ntfy: sending request: %w", err)
+		return fmt.Errorf("sending request: %w", err)
 	}
 	defer func() {
 		io.Copy(io.Discard, resp.Body)
@@ -58,7 +58,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	}()
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("ntfy: server returned %s", resp.Status)
+		return fmt.Errorf("server returned %s", resp.Status)
 	}
 
 	return nil
