@@ -1,0 +1,11 @@
+config:
+  # Disable line length — tables and URLs make strict wrapping impractical
+  MD013: false
+  # Allow tables with mixed column widths
+  MD060: false
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - "docs/plans/**"

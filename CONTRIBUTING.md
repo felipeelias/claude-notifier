@@ -44,6 +44,7 @@ echo '{"message":"hello","title":"test"}' | ./claude-notifier --config path/to/c
 ## Style
 
 - `go vet` and `go test -race` must pass
+- `markdownlint-cli2` must pass on all markdown files
 - Conventional commits (`feat:`, `fix:`, `test:`, `docs:`, etc.)
 - Keep plugins self-contained in their own package
 - Don't add dependencies unless you really need them
