@@ -5,10 +5,25 @@
 # Timeout for each plugin's Send call
 timeout = "10s"
 
-# ntfy push notifications
-# Docs: https://docs.ntfy.sh
+# ntfy push notifications (https://docs.ntfy.sh)
 [[notifiers.ntfy]]
 url = "https://ntfy.sh/my-topic"
-# priority = "default"
-# tags = "robot"
-# token = "tk_..."
+# markdown = true
+# message = "{{.Message}}"
+# title = "{{.Title}}"
+# priority = ""
+# tags = ""
+# icon = ""
+# click = ""
+# attach = ""
+# filename = ""
+# email = ""
+# delay = ""
+# actions = ""
+# token = ""
+# username = ""
+# password = ""
+#
+# User-defined template variables
+# [notifiers.ntfy.vars]
+# env = "production"

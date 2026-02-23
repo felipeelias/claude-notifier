@@ -78,9 +78,25 @@ timeout = "10s"
 # ntfy push notifications (https://docs.ntfy.sh)
 [[notifiers.ntfy]]
 url = "https://ntfy.sh/my-topic"
-# priority = "default"
-# tags = "robot"
-# token = "tk_..."
+# markdown = true
+# message = "{{.Message}}"
+# title = "{{.Title}}"
+# priority = ""
+# tags = ""
+# icon = ""
+# click = ""
+# attach = ""
+# filename = ""
+# email = ""
+# delay = ""
+# actions = ""
+# token = ""
+# username = ""
+# password = ""
+#
+# User-defined template variables
+# [notifiers.ntfy.vars]
+# env = "production"
 
 # Multiple instances of the same plugin are supported
 # [[notifiers.ntfy]]
@@ -116,12 +132,55 @@ echo '{"message":"Build complete","title":"Claude Code"}' | claude-notifier
 
 Sends notifications via [ntfy](https://ntfy.sh), a simple HTTP-based pub-sub service.
 
-| Field      | Description                                                  |
-| ---------- | ------------------------------------------------------------ |
-| `url`      | ntfy server URL including topic                              |
-| `priority` | Message priority (`min`, `low`, `default`, `high`, `urgent`) |
-| `tags`     | Comma-separated emoji tags                                   |
-| `token`    | Access token for authentication                              |
+| Field      | Default            | Description                                                  |
+| ---------- | ------------------ | ------------------------------------------------------------ |
+| `url`      | (required)         | ntfy server URL including topic                              |
+| `markdown` | `true`             | Enable markdown formatting                                   |
+| `message`  | `{{.Message}}`     | Go template for the message body                             |
+| `title`    | `{{.Title}}`       | Go template for the notification title                       |
+| `priority` |                    | Message priority (`min`, `low`, `default`, `high`, `urgent`) |
+| `tags`     |                    | Comma-separated emoji tags                                   |
+| `icon`     |                    | Notification icon URL (JPEG/PNG)                             |
+| `click`    |                    | URL opened when tapping the notification                     |
+| `attach`   |                    | URL of file to attach                                        |
+| `filename` |                    | Override attachment filename                                 |
+| `email`    |                    | Email address for notification forwarding                    |
+| `delay`    |                    | Scheduled delivery (`30m`, `2h`, `tomorrow 10am`)            |
+| `actions`  |                    | Action buttons in ntfy format                                |
+| `token`    |                    | Access token for authentication (Bearer)                     |
+| `username` |                    | Username for basic authentication                            |
+| `password` |                    | Password for basic authentication                            |
+| `vars`     |                    | User-defined key-value pairs for templates                   |
+
+#### Templates
+
+The `message` and `title` fields are [Go templates](https://pkg.go.dev/text/template).
+Available variables:
+
+| Variable                | Source                              |
+| ----------------------- | ----------------------------------- |
+| `{{.Message}}`          | Notification message from Claude    |
+| `{{.Title}}`            | Notification title from Claude      |
+| `{{.Project}}`          | Project name (last segment of cwd)  |
+| `{{.Cwd}}`              | Working directory                   |
+| `{{.NotificationType}}` | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` |
+| `{{.SessionID}}`        | Claude Code session ID              |
+| `{{.TranscriptPath}}`   | Path to conversation transcript     |
+
+Custom variables defined in `[notifiers.ntfy.vars]` are also available, title-cased
+(e.g., `env` becomes `{{.Env}}`).
+
+Example:
+
+```toml
+[[notifiers.ntfy]]
+url = "https://ntfy.sh/my-topic"
+message = "**{{.Project}}** ({{.Env}}): {{.Message}}"
+title = "{{.NotificationType}}: {{.Title}}"
+
+[notifiers.ntfy.vars]
+env = "production"
+```
 
 ### Writing a plugin
 
