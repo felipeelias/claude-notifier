@@ -116,6 +116,7 @@ Each plugin is configured under `[[notifiers.<name>]]` in the config file. Run `
 | Plugin | Description |
 | ------ | ----------- |
 | [ntfy](https://ntfy.sh) | HTTP-based push notifications |
+| [terminal-notifier](https://github.com/julienXX/terminal-notifier) | macOS desktop notifications |
 
 Want to add a plugin? See [CONTRIBUTING.md](CONTRIBUTING.md).
 

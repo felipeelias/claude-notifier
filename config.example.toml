@@ -63,3 +63,56 @@ url = "https://ntfy.sh/my-topic"
 ## Keys are title-cased for template access (env -> {{.Env}})
 # [notifiers.ntfy.vars]
 # env = "production"
+
+## macOS desktop notifications via terminal-notifier
+## https://github.com/julienXX/terminal-notifier
+[[notifiers.terminal-notifier]]
+
+## Path to the terminal-notifier binary (required)
+## Install: brew install terminal-notifier
+path = "terminal-notifier"
+
+## Go template for the message body
+## Available variables: {{.Message}}, {{.Title}}, {{.Project}}, {{.Cwd}},
+## {{.NotificationType}}, {{.SessionID}}, {{.TranscriptPath}}
+## Custom variables from [notifiers.terminal-notifier.vars] are also available, title-cased
+# message = "{{.Message}}"
+
+## Go template for the notification title
+# title = "Claude Code ({{.Project}})"
+
+## Go template for the notification subtitle
+# subtitle = ""
+
+## Sound to play ("default" for system default, or a sound name from /System/Library/Sounds)
+# sound = ""
+
+## Group ID — only one notification per group is shown, replacing previous ones
+## Defaults to session ID so notifications from the same session replace each other
+# group = "{{.SessionID}}"
+
+## URL or custom scheme to open when clicking the notification (Go template)
+# open = ""
+
+## Shell command to run when clicking the notification (Go template)
+# execute = ""
+
+## App bundle ID to activate when clicking the notification
+# activate = ""
+
+## Fake sender app bundle ID
+# sender = ""
+
+## Path to a custom app icon image
+# app_icon = ""
+
+## Path to an image to attach inside the notification
+# content_image = ""
+
+## Send notification even when Do Not Disturb is active
+# ignore_dnd = false
+
+## User-defined template variables
+## Keys are title-cased for template access (env -> {{.Env}})
+# [notifiers.terminal-notifier.vars]
+# env = "production"
