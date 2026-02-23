@@ -243,7 +243,8 @@ func TestNtfyBasicAuth(t *testing.T) {
 	}
 	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
 	require.NoError(t, err)
-	assert.Contains(t, gotHeaders.Get("Authorization"), "Basic ")
+	// base64("admin:secret") = "YWRtaW46c2VjcmV0"
+	assert.Equal(t, "Basic YWRtaW46c2VjcmV0", gotHeaders.Get("Authorization"))
 }
 
 func TestNtfyTokenOverridesBasicAuth(t *testing.T) {
@@ -278,12 +279,12 @@ func TestNtfyVarCollision(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// User var "Message" should NOT override the Claude Code field
+	// User var "message" (title-cased to "Message") should NOT override the Claude Code field
 	p := &ntfy.Ntfy{
 		URL:     srv.URL,
 		Message: "{{.Message}}",
 		Title:   "{{.Title}}",
-		Vars:    map[string]string{"Message": "overridden"},
+		Vars:    map[string]string{"message": "overridden"},
 	}
 	err := p.Send(context.Background(), notifier.Notification{
 		Message: "original",
