@@ -28,7 +28,10 @@ If you're unsure whether a plugin fits, open an issue first to discuss it.
 # install go 1.24+ via asdf
 asdf install
 
-# run tests
+# run unit tests only (faster)
+go test ./... -short -v -race
+
+# run all tests including integration
 go test ./... -v -race
 
 # build
