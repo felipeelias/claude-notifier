@@ -18,6 +18,7 @@ brews:
     repository:
       owner: felipeelias
       name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/felipeelias/claude-notifier
     description: Notification dispatcher for Claude Code hooks
     license: MIT
