@@ -80,7 +80,7 @@ timeout = "10s"
 url = "https://ntfy.sh/my-topic"
 # markdown = true
 # message = "{{.Message}}"
-# title = "{{.Title}}"
+# title = "Claude Code ({{.Project}})"
 # priority = ""
 # tags = ""
 # icon = ""
@@ -135,9 +135,9 @@ Sends notifications via [ntfy](https://ntfy.sh), a simple HTTP-based pub-sub ser
 | Field      | Default            | Description                                                  |
 | ---------- | ------------------ | ------------------------------------------------------------ |
 | `url`      | (required)         | ntfy server URL including topic                              |
-| `markdown` | `true`             | Enable markdown formatting                                   |
+| `markdown` | `true`             | Enable markdown formatting (web app only)                    |
 | `message`  | `{{.Message}}`     | Go template for the message body                             |
-| `title`    | `{{.Title}}`       | Go template for the notification title                       |
+| `title`    | `Claude Code ({{.Project}})` | Go template for the notification title             |
 | `priority` |                    | Message priority (`min`, `low`, `default`, `high`, `urgent`) |
 | `tags`     |                    | Comma-separated emoji tags                                   |
 | `icon`     |                    | Notification icon URL (JPEG/PNG)                             |

@@ -33,7 +33,8 @@ func TestNtfySend(t *testing.T) {
 	p := &ntfy.Ntfy{URL: srv.URL}
 	err := p.Send(context.Background(), notifier.Notification{
 		Message: "Task complete",
-		Title:   "Claude Code (myproject)",
+		Title:   "Claude Code",
+		Cwd:     "/home/user/myproject",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Task complete", gotBody)
@@ -88,7 +89,7 @@ func TestNtfyDefaults(t *testing.T) {
 	ntfy.ApplyDefaults(p)
 	assert.True(t, p.Markdown)
 	assert.Equal(t, "{{.Message}}", p.Message)
-	assert.Equal(t, "{{.Title}}", p.Title)
+	assert.Equal(t, "Claude Code ({{.Project}})", p.Title)
 }
 
 func TestNtfyImplementsNotifier(t *testing.T) {

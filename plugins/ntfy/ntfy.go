@@ -47,7 +47,7 @@ type Ntfy struct {
 func ApplyDefaults(n *Ntfy) {
 	n.Markdown = true
 	n.Message = "{{.Message}}"
-	n.Title = "{{.Title}}"
+	n.Title = "Claude Code ({{.Project}})"
 }
 
 func (n *Ntfy) Name() string { return "ntfy" }
@@ -102,7 +102,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 
 	titleTmpl := n.Title
 	if titleTmpl == "" {
-		titleTmpl = "{{.Title}}"
+		titleTmpl = "Claude Code ({{.Project}})"
 	}
 	title, err := renderTemplate("title", titleTmpl, tctx)
 	if err != nil {
@@ -178,7 +178,7 @@ func (n *Ntfy) SampleConfig() string {
 url = "https://ntfy.sh/my-topic"
 # markdown = true
 # message = "{{.Message}}"
-# title = "{{.Title}}"
+# title = "Claude Code ({{.Project}})"
 # priority = ""
 # tags = ""
 # icon = ""
