@@ -1,5 +1,9 @@
 # claude-notifier
 
+[![CI](https://github.com/felipeelias/claude-notifier/actions/workflows/ci.yml/badge.svg)](https://github.com/felipeelias/claude-notifier/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/github/go-mod/go-version/felipeelias/claude-notifier)](https://github.com/felipeelias/claude-notifier/blob/main/go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/felipeelias/claude-notifier/blob/main/LICENSE)
+
 Notification dispatcher for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hooks. Reads JSON from stdin, fans out to all configured notification channels concurrently. Single static binary, compiled-in plugins, TOML configuration.
 
 ## Why
