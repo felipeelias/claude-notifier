@@ -21,10 +21,30 @@ var httpClient = &http.Client{
 
 // Ntfy sends notifications via an ntfy server.
 type Ntfy struct {
-	URL      string `toml:"url"`
-	Priority string `toml:"priority"`
-	Tags     string `toml:"tags"`
-	Token    string `toml:"token"`
+	URL      string            `toml:"url"`
+	Token    string            `toml:"token"`
+	Username string            `toml:"username"`
+	Password string            `toml:"password"`
+	Priority string            `toml:"priority"`
+	Tags     string            `toml:"tags"`
+	Icon     string            `toml:"icon"`
+	Click    string            `toml:"click"`
+	Attach   string            `toml:"attach"`
+	Filename string            `toml:"filename"`
+	Email    string            `toml:"email"`
+	Delay    string            `toml:"delay"`
+	Actions  string            `toml:"actions"`
+	Markdown bool              `toml:"markdown"`
+	Message  string            `toml:"message"`
+	Title    string            `toml:"title"`
+	Vars     map[string]string `toml:"vars"`
+}
+
+// ApplyDefaults sets sane defaults on a new Ntfy instance.
+func ApplyDefaults(n *Ntfy) {
+	n.Markdown = true
+	n.Message = "{{.Message}}"
+	n.Title = "{{.Title}}"
 }
 
 func (n *Ntfy) Name() string { return "ntfy" }
@@ -66,17 +86,36 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 
 // SampleConfig returns example TOML configuration.
 func (n *Ntfy) SampleConfig() string {
-	return `[[notifiers.ntfy]]
+	return `# ntfy push notifications (https://docs.ntfy.sh)
+[[notifiers.ntfy]]
 url = "https://ntfy.sh/my-topic"
-# priority = "default"
-# tags = "robot"
-# token = "tk_..."
+# markdown = true
+# message = "{{.Message}}"
+# title = "{{.Title}}"
+# priority = ""
+# tags = ""
+# icon = ""
+# click = ""
+# attach = ""
+# filename = ""
+# email = ""
+# delay = ""
+# actions = ""
+# token = ""
+# username = ""
+# password = ""
+#
+# User-defined template variables
+# [notifiers.ntfy.vars]
+# env = "production"
 `
 }
 
 func init() {
 	if err := cli.Registry.Register("ntfy", func() notifier.Notifier {
-		return &Ntfy{}
+		n := &Ntfy{}
+		ApplyDefaults(n)
+		return n
 	}); err != nil {
 		panic(err)
 	}

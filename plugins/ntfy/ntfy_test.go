@@ -82,6 +82,15 @@ func TestNtfySendServerError(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNtfyDefaults(t *testing.T) {
+	// Verify the factory sets correct defaults
+	p := &ntfy.Ntfy{}
+	ntfy.ApplyDefaults(p)
+	assert.True(t, p.Markdown)
+	assert.Equal(t, "{{.Message}}", p.Message)
+	assert.Equal(t, "{{.Title}}", p.Title)
+}
+
 func TestNtfyImplementsNotifier(t *testing.T) {
 	var _ notifier.Notifier = &ntfy.Ntfy{}
 }
