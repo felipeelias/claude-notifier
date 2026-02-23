@@ -1,11 +1,14 @@
 package ntfy
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/felipeelias/claude-notifier/internal/cli"
@@ -49,14 +52,67 @@ func ApplyDefaults(n *Ntfy) {
 
 func (n *Ntfy) Name() string { return "ntfy" }
 
+// buildTemplateContext creates a flat map from notification fields + user vars.
+func buildTemplateContext(notif notifier.Notification, vars map[string]string) map[string]string {
+	ctx := map[string]string{
+		"Message":          notif.Message,
+		"Title":            notif.Title,
+		"Cwd":              notif.Cwd,
+		"Project":          notif.Project(),
+		"NotificationType": notif.NotificationType,
+		"SessionID":        notif.SessionID,
+		"TranscriptPath":   notif.TranscriptPath,
+	}
+	// User vars (title-cased). Claude Code fields take precedence.
+	for k, v := range vars {
+		key := strings.ToUpper(k[:1]) + k[1:]
+		if _, exists := ctx[key]; !exists {
+			ctx[key] = v
+		}
+	}
+	return ctx
+}
+
+func renderTemplate(name, tmpl string, data map[string]string) (string, error) {
+	t, err := template.New(name).Parse(tmpl)
+	if err != nil {
+		return "", fmt.Errorf("rendering %s template: %w", name, err)
+	}
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("rendering %s template: %w", name, err)
+	}
+	return buf.String(), nil
+}
+
 func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.URL, strings.NewReader(notif.Message))
+	tctx := buildTemplateContext(notif, n.Vars)
+
+	msgTmpl := n.Message
+	if msgTmpl == "" {
+		msgTmpl = "{{.Message}}"
+	}
+	body, err := renderTemplate("message", msgTmpl, tctx)
+	if err != nil {
+		return err
+	}
+
+	titleTmpl := n.Title
+	if titleTmpl == "" {
+		titleTmpl = "{{.Title}}"
+	}
+	title, err := renderTemplate("title", titleTmpl, tctx)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.URL, strings.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
 
-	if notif.Title != "" {
-		req.Header.Set("Title", notif.Title)
+	if title != "" {
+		req.Header.Set("Title", title)
 	}
 	if n.Priority != "" {
 		req.Header.Set("Priority", n.Priority)
@@ -64,8 +120,36 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	if n.Tags != "" {
 		req.Header.Set("Tags", n.Tags)
 	}
+	if n.Icon != "" {
+		req.Header.Set("X-Icon", n.Icon)
+	}
+	if n.Click != "" {
+		req.Header.Set("X-Click", n.Click)
+	}
+	if n.Attach != "" {
+		req.Header.Set("X-Attach", n.Attach)
+	}
+	if n.Filename != "" {
+		req.Header.Set("X-Filename", n.Filename)
+	}
+	if n.Email != "" {
+		req.Header.Set("X-Email", n.Email)
+	}
+	if n.Delay != "" {
+		req.Header.Set("X-Delay", n.Delay)
+	}
+	if n.Actions != "" {
+		req.Header.Set("X-Actions", n.Actions)
+	}
+	if n.Markdown {
+		req.Header.Set("X-Markdown", "yes")
+	}
+	// Auth: token takes precedence over username/password
 	if n.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+n.Token)
+	} else if n.Username != "" && n.Password != "" {
+		creds := base64.StdEncoding.EncodeToString([]byte(n.Username + ":" + n.Password))
+		req.Header.Set("Authorization", "Basic "+creds)
 	}
 
 	resp, err := httpClient.Do(req)

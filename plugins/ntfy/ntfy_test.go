@@ -94,3 +94,71 @@ func TestNtfyDefaults(t *testing.T) {
 func TestNtfyImplementsNotifier(t *testing.T) {
 	var _ notifier.Notifier = &ntfy.Ntfy{}
 }
+
+func TestNtfyTemplateRendering(t *testing.T) {
+	var gotBody string
+	var gotHeaders http.Header
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		gotHeaders = r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:     srv.URL,
+		Message: "**{{.Project}}**: {{.Message}}",
+		Title:   "{{.NotificationType}}: {{.Title}}",
+	}
+	err := p.Send(context.Background(), notifier.Notification{
+		Message:          "Build complete",
+		Title:            "Claude Code",
+		Cwd:              "/home/user/myproject",
+		NotificationType: "idle_prompt",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "**myproject**: Build complete", gotBody)
+	assert.Equal(t, "idle_prompt: Claude Code", gotHeaders.Get("Title"))
+}
+
+func TestNtfyTemplateWithVars(t *testing.T) {
+	var gotBody string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:     srv.URL,
+		Message: "{{.Env}}: {{.Message}}",
+		Title:   "{{.Title}}",
+		Vars:    map[string]string{"env": "production"},
+	}
+	err := p.Send(context.Background(), notifier.Notification{
+		Message: "Task done",
+		Title:   "Claude Code",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "production: Task done", gotBody)
+}
+
+func TestNtfyTemplateBadTemplate(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	p := &ntfy.Ntfy{
+		URL:     srv.URL,
+		Message: "{{.Invalid",
+		Title:   "{{.Title}}",
+	}
+	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "rendering message template")
+}
