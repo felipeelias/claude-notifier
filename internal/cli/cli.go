@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -66,8 +67,9 @@ func loadNotifiers(configPath string) ([]notifier.Notifier, *config.Config, erro
 }
 
 func sendAction(c *ucli.Context) error {
+	const maxInputSize = 1 << 20 // 1 MiB
 	var n notifier.Notification
-	if err := json.NewDecoder(os.Stdin).Decode(&n); err != nil {
+	if err := json.NewDecoder(io.LimitReader(os.Stdin, maxInputSize)).Decode(&n); err != nil {
 		slog.Error("reading notification from stdin", "error", err)
 		return nil // don't fail the hook
 	}
