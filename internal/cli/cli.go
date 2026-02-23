@@ -111,7 +111,7 @@ func initCommand() *ucli.Command {
 			}
 
 			sample := config.SampleConfig(Registry)
-			if err := os.WriteFile(configPath, []byte(sample), 0644); err != nil {
+			if err := os.WriteFile(configPath, []byte(sample), 0600); err != nil {
 				return fmt.Errorf("writing config: %w", err)
 			}
 
