@@ -110,6 +110,7 @@ func TestEndToEndInitCommand(t *testing.T) {
 	content, err := os.ReadFile(configPath)
 	require.NoError(t, err)
 	assert.Contains(t, string(content), "[[notifiers.ntfy]]")
+	assert.Contains(t, string(content), "[[notifiers.terminal-notifier]]")
 }
 
 func TestEndToEndTestCommand(t *testing.T) {
