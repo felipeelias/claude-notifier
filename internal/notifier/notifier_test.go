@@ -23,12 +23,23 @@ func (m *mockNotifier) Send(ctx context.Context, n notifier.Notification) error 
 }
 
 func TestNotificationJSON(t *testing.T) {
-	raw := `{"message":"Task complete","title":"Claude Code","cwd":"/home/user/project"}`
+	raw := `{
+		"message":"Task complete",
+		"title":"Claude Code",
+		"cwd":"/home/user/project",
+		"notification_type":"idle_prompt",
+		"session_id":"abc123",
+		"transcript_path":"/home/user/.claude/transcript.jsonl"
+	}`
 	var n notifier.Notification
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 	assert.Equal(t, "Task complete", n.Message)
 	assert.Equal(t, "Claude Code", n.Title)
 	assert.Equal(t, "/home/user/project", n.Cwd)
+	assert.Equal(t, "idle_prompt", n.NotificationType)
+	assert.Equal(t, "abc123", n.SessionID)
+	assert.Equal(t, "/home/user/.claude/transcript.jsonl", n.TranscriptPath)
+	assert.Equal(t, "project", n.Project())
 }
 
 func TestNotifierInterface(t *testing.T) {
