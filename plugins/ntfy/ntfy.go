@@ -1,18 +1,17 @@
 package ntfy
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/felipeelias/claude-notifier/internal/cli"
 	"github.com/felipeelias/claude-notifier/internal/notifier"
+	"github.com/felipeelias/claude-notifier/internal/tmpl"
 )
 
 var httpClient = &http.Client{
@@ -52,50 +51,14 @@ func ApplyDefaults(n *Ntfy) {
 
 func (n *Ntfy) Name() string { return "ntfy" }
 
-// buildTemplateContext creates a flat map from notification fields + user vars.
-func buildTemplateContext(notif notifier.Notification, vars map[string]string) map[string]string {
-	ctx := map[string]string{
-		"Message":          notif.Message,
-		"Title":            notif.Title,
-		"Cwd":              notif.Cwd,
-		"Project":          notif.Project(),
-		"NotificationType": notif.NotificationType,
-		"SessionID":        notif.SessionID,
-		"TranscriptPath":   notif.TranscriptPath,
-	}
-	// User vars (title-cased). Claude Code fields take precedence.
-	for k, v := range vars {
-		if k == "" {
-			continue
-		}
-		key := strings.ToUpper(k[:1]) + k[1:]
-		if _, exists := ctx[key]; !exists {
-			ctx[key] = v
-		}
-	}
-	return ctx
-}
-
-func renderTemplate(name, tmpl string, data map[string]string) (string, error) {
-	t, err := template.New(name).Parse(tmpl)
-	if err != nil {
-		return "", fmt.Errorf("rendering %s template: %w", name, err)
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("rendering %s template: %w", name, err)
-	}
-	return buf.String(), nil
-}
-
 func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
-	tctx := buildTemplateContext(notif, n.Vars)
+	tctx := tmpl.BuildContext(notif, n.Vars)
 
 	msgTmpl := n.Message
 	if msgTmpl == "" {
 		msgTmpl = "{{.Message}}"
 	}
-	body, err := renderTemplate("message", msgTmpl, tctx)
+	body, err := tmpl.Render("message", msgTmpl, tctx)
 	if err != nil {
 		return err
 	}
@@ -104,7 +67,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	if titleTmpl == "" {
 		titleTmpl = "Claude Code ({{.Project}})"
 	}
-	title, err := renderTemplate("title", titleTmpl, tctx)
+	title, err := tmpl.Render("title", titleTmpl, tctx)
 	if err != nil {
 		return err
 	}
