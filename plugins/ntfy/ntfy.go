@@ -3,12 +3,21 @@ package ntfy
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/felipeelias/claude-notifier/internal/cli"
 	"github.com/felipeelias/claude-notifier/internal/notifier"
 )
+
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	},
+}
 
 // Ntfy sends notifications via an ntfy server.
 type Ntfy struct {
@@ -39,11 +48,14 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 		req.Header.Set("Authorization", "Bearer "+n.Token)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("ntfy: sending request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+	}()
 
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("ntfy: server returned %s", resp.Status)
