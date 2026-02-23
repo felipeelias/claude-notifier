@@ -24,10 +24,11 @@ type Config struct {
 
 // Load reads and parses a TOML config file.
 func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
+	defer f.Close()
 
 	cfg := &Config{
 		Global: Global{
@@ -35,7 +36,7 @@ func Load(path string) (*Config, error) {
 		},
 	}
 
-	meta, err := toml.Decode(string(data), cfg)
+	meta, err := toml.NewDecoder(f).Decode(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
