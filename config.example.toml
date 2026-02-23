@@ -1,0 +1,14 @@
+# claude-notifier configuration
+# Place this file at ~/.config/claude-notifier/config.toml
+
+[global]
+# Timeout for each plugin's Send call
+timeout = "10s"
+
+# ntfy push notifications
+# Docs: https://docs.ntfy.sh
+[[notifiers.ntfy]]
+url = "https://ntfy.sh/my-topic"
+# priority = "default"
+# tags = "robot"
+# token = "tk_..."

@@ -1,0 +1,9 @@
+{
+  "name": "claude-notifier",
+  "description": "Multi-channel notification dispatcher for Claude Code hooks. Proxies notifications to ntfy and other channels via a Telegraf-style plugin system.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Felipe Philipp"
+  },
+  "homepage": "https://github.com/felipeelias/claude-notifier"
+}
