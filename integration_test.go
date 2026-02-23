@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,16 +16,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testBinary string
+
+func TestMain(m *testing.M) {
+	tmp, err := os.MkdirTemp("", "claude-notifier-test-*")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmp)
+
+	testBinary = filepath.Join(tmp, "claude-notifier")
+	build := exec.Command("go", "build", "-o", testBinary, ".")
+	build.Stderr = os.Stderr
+	if err := build.Run(); err != nil {
+		log.Fatalf("failed to build binary: %v", err)
+	}
+
+	os.Exit(m.Run())
+}
+
 func TestEndToEnd(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-
-	// Build binary
-	binary := filepath.Join(t.TempDir(), "claude-notifier")
-	build := exec.Command("go", "build", "-o", binary, ".")
-	build.Stderr = os.Stderr
-	require.NoError(t, build.Run(), "failed to build binary")
 
 	// Start mock ntfy server
 	var gotBody string
@@ -54,7 +68,7 @@ url = "` + srv.URL + `"
 	require.NoError(t, err)
 
 	// Run claude-notifier
-	cmd := exec.Command(binary, "--config", configPath)
+	cmd := exec.Command(testBinary, "--config", configPath)
 	cmd.Stdin = bytes.NewReader(input)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -71,14 +85,9 @@ func TestEndToEndMissingConfig(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	binary := filepath.Join(t.TempDir(), "claude-notifier")
-	build := exec.Command("go", "build", "-o", binary, ".")
-	build.Stderr = os.Stderr
-	require.NoError(t, build.Run())
-
 	// Run with nonexistent config — should still exit 0 (never fail the hook)
 	input, _ := json.Marshal(map[string]string{"message": "test"})
-	cmd := exec.Command(binary, "--config", "/nonexistent/config.toml")
+	cmd := exec.Command(testBinary, "--config", "/nonexistent/config.toml")
 	cmd.Stdin = bytes.NewReader(input)
 	err := cmd.Run()
 	assert.NoError(t, err, "should exit 0 even with missing config")
@@ -89,13 +98,8 @@ func TestEndToEndInitCommand(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	binary := filepath.Join(t.TempDir(), "claude-notifier")
-	build := exec.Command("go", "build", "-o", binary, ".")
-	build.Stderr = os.Stderr
-	require.NoError(t, build.Run())
-
 	configPath := filepath.Join(t.TempDir(), "claude-notifier", "config.toml")
-	cmd := exec.Command(binary, "--config", configPath, "init")
+	cmd := exec.Command(testBinary, "--config", configPath, "init")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	err := cmd.Run()
@@ -113,11 +117,6 @@ func TestEndToEndTestCommand(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	binary := filepath.Join(t.TempDir(), "claude-notifier")
-	build := exec.Command("go", "build", "-o", binary, ".")
-	build.Stderr = os.Stderr
-	require.NoError(t, build.Run())
-
 	// Start mock server
 	var received bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +130,7 @@ func TestEndToEndTestCommand(t *testing.T) {
 url = "`+srv.URL+`"
 `), 0644)
 
-	cmd := exec.Command(binary, "--config", configPath, "test")
+	cmd := exec.Command(testBinary, "--config", configPath, "test")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	err := cmd.Run()
