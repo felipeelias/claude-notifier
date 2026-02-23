@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -66,8 +67,16 @@ type Configurable interface {
 func SampleConfig(reg *notifier.Registry) string {
 	s := "# claude-notifier configuration\n\n"
 	s += "[global]\ntimeout = \"10s\"\n\n"
-	for name, factory := range reg.All() {
-		n := factory()
+
+	all := reg.All()
+	names := make([]string, 0, len(all))
+	for name := range all {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		n := all[name]()
 		if c, ok := n.(Configurable); ok {
 			s += c.SampleConfig() + "\n"
 		} else {
