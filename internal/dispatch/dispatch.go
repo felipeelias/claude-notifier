@@ -18,17 +18,14 @@ func Send(ctx context.Context, notifiers []notifier.Notifier, notif notifier.Not
 	)
 
 	for _, dest := range notifiers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			err := dest.Send(ctx, notif)
 			if err != nil {
 				mu.Lock()
 				errs = append(errs, fmt.Errorf("%s: %w", dest.Name(), err))
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
