@@ -3,6 +3,7 @@ package notifier_test
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/felipeelias/claude-notifier/internal/notifier"
@@ -40,6 +41,45 @@ func TestNotificationJSON(t *testing.T) {
 	assert.Equal(t, "abc123", n.SessionID)
 	assert.Equal(t, "/home/user/.claude/transcript.jsonl", n.TranscriptPath)
 	assert.Equal(t, "project", n.Project())
+}
+
+func TestValidateAcceptsNormalNotification(t *testing.T) {
+	n := notifier.Notification{
+		Message:          "Task complete",
+		Title:            "Claude Code",
+		Cwd:              "/home/user/project",
+		NotificationType: "idle_prompt",
+		SessionID:        "abc123",
+		TranscriptPath:   "/home/user/.claude/transcript.jsonl",
+	}
+	assert.NoError(t, n.Validate())
+}
+
+func TestValidateAcceptsEmptyNotification(t *testing.T) {
+	n := notifier.Notification{}
+	assert.NoError(t, n.Validate())
+}
+
+func TestValidateRejectsLongMessage(t *testing.T) {
+	n := notifier.Notification{Message: strings.Repeat("a", 4097)}
+	err := n.Validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Message")
+}
+
+func TestValidateRejectsLongTitle(t *testing.T) {
+	n := notifier.Notification{Title: strings.Repeat("a", 257)}
+	err := n.Validate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Title")
+}
+
+func TestValidateAcceptsAtExactLimit(t *testing.T) {
+	n := notifier.Notification{
+		Message: strings.Repeat("a", 4096),
+		Title:   strings.Repeat("a", 256),
+	}
+	assert.NoError(t, n.Validate())
 }
 
 func TestNotifierInterface(t *testing.T) {

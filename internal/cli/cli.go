@@ -74,6 +74,11 @@ func sendAction(c *ucli.Context) error {
 		return nil // don't fail the hook
 	}
 
+	if err := n.Validate(); err != nil {
+		slog.Error("invalid notification", "error", err)
+		return nil // don't fail the hook
+	}
+
 	configPath := c.String("config")
 	notifiers, cfg, err := loadNotifiers(configPath)
 	if err != nil {
