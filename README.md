@@ -21,17 +21,35 @@ claude-notifier is a single binary that handles all of that:
 
 ## Install
 
-### Homebrew
+### Homebrew (macOS and Linux)
 
 ```bash
 brew install felipeelias/tap/claude-notifier
 ```
 
-### Binary
+### Debian / Ubuntu
 
-Download from [GitHub Releases](https://github.com/felipeelias/claude-notifier/releases).
+Download the `.deb` from [GitHub Releases](https://github.com/felipeelias/claude-notifier/releases) and install:
+
+```bash
+sudo dpkg -i claude-notifier_*.deb
+```
+
+### Fedora / RHEL
+
+Download the `.rpm` from [GitHub Releases](https://github.com/felipeelias/claude-notifier/releases) and install:
+
+```bash
+sudo rpm -i claude-notifier_*.rpm
+```
+
+### Manual download
+
+Pre-built binaries for macOS, Linux, and Windows (amd64 and arm64) are available on the [GitHub Releases](https://github.com/felipeelias/claude-notifier/releases) page. Download the archive for your platform, extract it, and place the binary in your `PATH`.
 
 ### From source
+
+Requires Go 1.24+.
 
 ```bash
 go install github.com/felipeelias/claude-notifier@latest

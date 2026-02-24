@@ -13,6 +13,16 @@ builds:
       - amd64
       - arm64
 
+nfpms:
+  - package_name: claude-notifier
+    homepage: https://github.com/felipeelias/claude-notifier
+    maintainer: Felipe Philipp <24556+felipeelias@users.noreply.github.com>
+    description: Notification dispatcher for Claude Code hooks
+    license: MIT
+    formats:
+      - deb
+      - rpm
+
 brews:
   - name: claude-notifier
     repository:
