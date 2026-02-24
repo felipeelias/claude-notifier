@@ -16,11 +16,8 @@ import (
 	ucli "github.com/urfave/cli/v2"
 )
 
-// Registry is the global plugin registry, populated by plugin init() functions.
-var Registry = notifier.NewRegistry()
-
 // New creates the CLI application.
-func New(version string) *ucli.App {
+func New(version string, reg *notifier.Registry) *ucli.App {
 	return &ucli.App{
 		Name:    "claude-notifier",
 		Usage:   "Notification dispatcher for Claude Code",
@@ -34,15 +31,17 @@ func New(version string) *ucli.App {
 				EnvVars: []string{"CLAUDE_NOTIFIER_CONFIG"},
 			},
 		},
-		Action: sendAction,
+		Action: func(cmd *ucli.Context) error {
+			return sendAction(cmd, reg)
+		},
 		Commands: []*ucli.Command{
-			initCommand(),
-			testCommand(),
+			initCommand(reg),
+			testCommand(reg),
 		},
 	}
 }
 
-func loadNotifiers(configPath string) ([]notifier.Notifier, *config.Config, error) {
+func loadNotifiers(configPath string, reg *notifier.Registry) ([]notifier.Notifier, *config.Config, error) {
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		return nil, nil, err
@@ -50,7 +49,7 @@ func loadNotifiers(configPath string) ([]notifier.Notifier, *config.Config, erro
 
 	var notifiers []notifier.Notifier
 	for name, primitives := range cfg.Notifiers {
-		factory, ok := Registry.All()[name]
+		factory, ok := reg.All()[name]
 		if !ok {
 			slog.Warn("unknown notifier plugin, skipping", "name", name)
 			continue
@@ -67,7 +66,7 @@ func loadNotifiers(configPath string) ([]notifier.Notifier, *config.Config, erro
 	return notifiers, cfg, nil
 }
 
-func sendAction(c *ucli.Context) error {
+func sendAction(c *ucli.Context, reg *notifier.Registry) error {
 	const maxInputSize = 1 << 20 // 1 MiB
 	var n notifier.Notification
 	if err := json.NewDecoder(io.LimitReader(os.Stdin, maxInputSize)).Decode(&n); err != nil {
@@ -81,7 +80,7 @@ func sendAction(c *ucli.Context) error {
 	}
 
 	configPath := c.String("config")
-	notifiers, cfg, err := loadNotifiers(configPath)
+	notifiers, cfg, err := loadNotifiers(configPath, reg)
 	if err != nil {
 		slog.Error("loading config", "error", err)
 		return nil // don't fail the hook
@@ -103,7 +102,7 @@ func sendAction(c *ucli.Context) error {
 	return nil // always succeed
 }
 
-func initCommand() *ucli.Command {
+func initCommand(reg *notifier.Registry) *ucli.Command {
 	return &ucli.Command{
 		Name:  "init",
 		Usage: "Create default config file",
@@ -118,7 +117,7 @@ func initCommand() *ucli.Command {
 				return fmt.Errorf("creating config directory: %w", err)
 			}
 
-			sample := config.SampleConfig(Registry)
+			sample := config.SampleConfig(reg)
 			if err := os.WriteFile(configPath, []byte(sample), 0600); err != nil {
 				return fmt.Errorf("writing config: %w", err)
 			}
@@ -129,13 +128,13 @@ func initCommand() *ucli.Command {
 	}
 }
 
-func testCommand() *ucli.Command {
+func testCommand(reg *notifier.Registry) *ucli.Command {
 	return &ucli.Command{
 		Name:  "test",
 		Usage: "Send a test notification to all configured notifiers",
 		Action: func(c *ucli.Context) error {
 			configPath := c.String("config")
-			notifiers, cfg, err := loadNotifiers(configPath)
+			notifiers, cfg, err := loadNotifiers(configPath, reg)
 			if err != nil {
 				return fmt.Errorf("loading config: %w", err)
 			}

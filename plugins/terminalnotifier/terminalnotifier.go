@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/felipeelias/claude-notifier/internal/cli"
 	"github.com/felipeelias/claude-notifier/internal/notifier"
 	"github.com/felipeelias/claude-notifier/internal/tmpl"
 )
@@ -184,12 +183,15 @@ func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification
 	return nil
 }
 
-func init() {
-	if err := cli.Registry.Register("terminal-notifier", func() notifier.Notifier {
+// Register adds terminal-notifier to the given plugin registry.
+func Register(reg *notifier.Registry) {
+	err := reg.Register("terminal-notifier", func() notifier.Notifier {
 		n := &TerminalNotifier{}
 		ApplyDefaults(n)
+
 		return n
-	}); err != nil {
+	})
+	if err != nil {
 		panic(err)
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felipeelias/claude-notifier/internal/cli"
 	"github.com/felipeelias/claude-notifier/internal/notifier"
 	"github.com/felipeelias/claude-notifier/internal/tmpl"
 )
@@ -197,12 +196,15 @@ url = "https://ntfy.sh/my-topic"
 `
 }
 
-func init() {
-	if err := cli.Registry.Register("ntfy", func() notifier.Notifier {
+// Register adds ntfy to the given plugin registry.
+func Register(reg *notifier.Registry) {
+	err := reg.Register("ntfy", func() notifier.Notifier {
 		n := &Ntfy{}
 		ApplyDefaults(n)
+
 		return n
-	}); err != nil {
+	})
+	if err != nil {
 		panic(err)
 	}
 }

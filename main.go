@@ -5,16 +5,19 @@ import (
 	"os"
 
 	appcli "github.com/felipeelias/claude-notifier/internal/cli"
-
-	// Register plugins via init functions.
-	_ "github.com/felipeelias/claude-notifier/plugins/ntfy"
-	_ "github.com/felipeelias/claude-notifier/plugins/terminalnotifier"
+	"github.com/felipeelias/claude-notifier/internal/notifier"
+	"github.com/felipeelias/claude-notifier/plugins/ntfy"
+	"github.com/felipeelias/claude-notifier/plugins/terminalnotifier"
 )
 
 var version = "dev"
 
 func main() {
-	app := appcli.New(version)
+	reg := notifier.NewRegistry()
+	ntfy.Register(reg)
+	terminalnotifier.Register(reg)
+
+	app := appcli.New(version, reg)
 	if err := app.Run(os.Args); err != nil {
 		slog.Error("fatal", "error", err)
 		os.Exit(1)

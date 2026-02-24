@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	appcli "github.com/felipeelias/claude-notifier/internal/cli"
+	"github.com/felipeelias/claude-notifier/internal/notifier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestInitCommand(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "claude-notifier", "config.toml")
 
-	app := appcli.New("test")
+	app := appcli.New("test", notifier.NewRegistry())
 	err := app.Run([]string{"claude-notifier", "--config", configPath, "init"})
 	require.NoError(t, err)
 
@@ -32,14 +33,14 @@ func TestInitCommandAlreadyExists(t *testing.T) {
 	err := os.WriteFile(configPath, []byte("existing"), 0644)
 	require.NoError(t, err)
 
-	app := appcli.New("test")
+	app := appcli.New("test", notifier.NewRegistry())
 	err = app.Run([]string{"claude-notifier", "--config", configPath, "init"})
 	assert.Error(t, err, "should fail if config already exists")
 }
 
 func TestVersionFlag(t *testing.T) {
 	var buf bytes.Buffer
-	app := appcli.New("1.2.3")
+	app := appcli.New("1.2.3", notifier.NewRegistry())
 	app.Writer = &buf
 
 	err := app.Run([]string{"claude-notifier", "--version"})
