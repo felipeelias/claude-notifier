@@ -123,7 +123,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 		return fmt.Errorf("sending request: %w", err)
 	}
 	defer func() {
-		io.Copy(io.Discard, resp.Body)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 

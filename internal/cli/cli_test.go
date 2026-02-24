@@ -29,10 +29,11 @@ func TestInitCommand(t *testing.T) {
 func TestInitCommandAlreadyExists(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.toml")
-	os.WriteFile(configPath, []byte("existing"), 0644)
+	err := os.WriteFile(configPath, []byte("existing"), 0644)
+	require.NoError(t, err)
 
 	app := appcli.New("test")
-	err := app.Run([]string{"claude-notifier", "--config", configPath, "init"})
+	err = app.Run([]string{"claude-notifier", "--config", configPath, "init"})
 	assert.Error(t, err, "should fail if config already exists")
 }
 

@@ -127,14 +127,15 @@ func TestEndToEndTestCommand(t *testing.T) {
 	defer srv.Close()
 
 	configPath := filepath.Join(t.TempDir(), "config.toml")
-	os.WriteFile(configPath, []byte(`[[notifiers.ntfy]]
+	err := os.WriteFile(configPath, []byte(`[[notifiers.ntfy]]
 url = "`+srv.URL+`"
 `), 0644)
+	require.NoError(t, err)
 
 	cmd := exec.Command(testBinary, "--config", configPath, "test")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
-	err := cmd.Run()
+	err = cmd.Run()
 	require.NoError(t, err)
 
 	assert.True(t, received, "mock server should have received the test notification")

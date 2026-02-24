@@ -12,4 +12,5 @@
 
 - [ ] `go test ./... -race` passes
 - [ ] `go vet ./...` passes
+- [ ] `golangci-lint run ./...` passes
 - [ ] Commit messages follow conventional commits
