@@ -235,6 +235,26 @@ func TestSendBinaryNonZeroExit(t *testing.T) {
 	assert.Contains(t, err.Error(), "running")
 }
 
+func TestSendExecuteAndOpenAreNotTemplated(t *testing.T) {
+	bin, logFile := fakeBinary(t)
+
+	p := &tn.TerminalNotifier{
+		Path:    bin,
+		Message: "{{.Message}}",
+		Execute: "echo {{.Message}}",
+		Open:    "https://example.com/{{.SessionID}}",
+	}
+	err := p.Send(context.Background(), notifier.Notification{
+		Message:   "pwned",
+		SessionID: "sess-42",
+	})
+	require.NoError(t, err)
+
+	args := readArgs(t, logFile)
+	assertArgPair(t, args, "-execute", "echo {{.Message}}")
+	assertArgPair(t, args, "-open", "https://example.com/{{.SessionID}}")
+}
+
 func TestSendMinimalConfig(t *testing.T) {
 	bin, logFile := fakeBinary(t)
 

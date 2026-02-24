@@ -67,10 +67,12 @@ path = "terminal-notifier"
 ## Defaults to session ID so notifications from the same session replace each other
 # group = "{{.SessionID}}"
 
-## URL or custom scheme to open when clicking the notification (Go template)
+## URL or custom scheme to open when clicking the notification
+## Not templated — static string for security (terminal-notifier executes these)
 # open = ""
 
-## Shell command to run when clicking the notification (Go template)
+## Shell command to run when clicking the notification
+## Not templated — static string for security (terminal-notifier executes these)
 # execute = ""
 
 ## App bundle ID to activate when clicking the notification
@@ -146,19 +148,11 @@ func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification
 	}
 
 	if n.Open != "" {
-		open, err := tmpl.Render("open", n.Open, tctx)
-		if err != nil {
-			return err
-		}
-		args = append(args, "-open", open)
+		args = append(args, "-open", n.Open)
 	}
 
 	if n.Execute != "" {
-		execute, err := tmpl.Render("execute", n.Execute, tctx)
-		if err != nil {
-			return err
-		}
-		args = append(args, "-execute", execute)
+		args = append(args, "-execute", n.Execute)
 	}
 
 	if n.Activate != "" {

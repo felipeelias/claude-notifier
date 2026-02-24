@@ -91,10 +91,12 @@ path = "terminal-notifier"
 ## Defaults to session ID so notifications from the same session replace each other
 # group = "{{.SessionID}}"
 
-## URL or custom scheme to open when clicking the notification (Go template)
+## URL or custom scheme to open when clicking the notification
+## Not templated — static string for security (terminal-notifier executes these)
 # open = ""
 
-## Shell command to run when clicking the notification (Go template)
+## Shell command to run when clicking the notification
+## Not templated — static string for security (terminal-notifier executes these)
 # execute = ""
 
 ## App bundle ID to activate when clicking the notification
