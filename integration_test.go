@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.RemoveAll(tmp)
+	defer func() { _ = os.RemoveAll(tmp) }()
 
 	testBinary = filepath.Join(tmp, "claude-notifier")
 	build := exec.Command("go", "build", "-o", testBinary, ".")

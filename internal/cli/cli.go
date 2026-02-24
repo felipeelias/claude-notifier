@@ -117,7 +117,7 @@ func initCommand() *ucli.Command {
 				return fmt.Errorf("writing config: %w", err)
 			}
 
-			fmt.Fprintf(c.App.Writer, "Config created at %s\n", configPath)
+			_, _ = fmt.Fprintf(c.App.Writer, "Config created at %s\n", configPath)
 			return nil
 		},
 	}
@@ -152,12 +152,12 @@ func testCommand() *ucli.Command {
 
 			if errs := dispatch.Send(ctx, notifiers, n); len(errs) > 0 {
 				for _, err := range errs {
-					fmt.Fprintf(c.App.ErrWriter, "error: %s\n", err)
+					_, _ = fmt.Fprintf(c.App.ErrWriter, "error: %s\n", err)
 				}
 				return fmt.Errorf("some notifiers failed")
 			}
 
-			fmt.Fprintln(c.App.Writer, "Test notification sent successfully")
+			_, _ = fmt.Fprintln(c.App.Writer, "Test notification sent successfully")
 			return nil
 		},
 	}

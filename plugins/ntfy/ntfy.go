@@ -124,7 +124,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	}
 	defer func() {
 		_, _ = io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}()
 
 	if resp.StatusCode >= 400 {
