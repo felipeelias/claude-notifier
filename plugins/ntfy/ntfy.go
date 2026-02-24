@@ -50,6 +50,38 @@ func ApplyDefaults(n *Ntfy) {
 
 func (n *Ntfy) Name() string { return "ntfy" }
 
+func (n *Ntfy) setHeaders(req *http.Request, title string) {
+	headers := []struct{ key, value string }{
+		{"Title", title},
+		{"Priority", n.Priority},
+		{"Tags", n.Tags},
+		{"X-Icon", n.Icon},
+		{"X-Click", n.Click},
+		{"X-Attach", n.Attach},
+		{"X-Filename", n.Filename},
+		{"X-Email", n.Email},
+		{"X-Delay", n.Delay},
+		{"X-Actions", n.Actions},
+	}
+	for _, h := range headers {
+		if h.value != "" {
+			req.Header.Set(h.key, h.value)
+		}
+	}
+
+	if n.Markdown {
+		req.Header.Set("X-Markdown", "yes")
+	}
+
+	// Auth: token takes precedence over username/password.
+	if n.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+n.Token)
+	} else if n.Username != "" && n.Password != "" {
+		creds := base64.StdEncoding.EncodeToString([]byte(n.Username + ":" + n.Password))
+		req.Header.Set("Authorization", "Basic "+creds)
+	}
+}
+
 func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 	tctx := tmpl.BuildContext(notif, n.Vars)
 
@@ -76,46 +108,7 @@ func (n *Ntfy) Send(ctx context.Context, notif notifier.Notification) error {
 		return fmt.Errorf("creating request: %w", err)
 	}
 
-	if title != "" {
-		req.Header.Set("Title", title)
-	}
-	if n.Priority != "" {
-		req.Header.Set("Priority", n.Priority)
-	}
-	if n.Tags != "" {
-		req.Header.Set("Tags", n.Tags)
-	}
-	if n.Icon != "" {
-		req.Header.Set("X-Icon", n.Icon)
-	}
-	if n.Click != "" {
-		req.Header.Set("X-Click", n.Click)
-	}
-	if n.Attach != "" {
-		req.Header.Set("X-Attach", n.Attach)
-	}
-	if n.Filename != "" {
-		req.Header.Set("X-Filename", n.Filename)
-	}
-	if n.Email != "" {
-		req.Header.Set("X-Email", n.Email)
-	}
-	if n.Delay != "" {
-		req.Header.Set("X-Delay", n.Delay)
-	}
-	if n.Actions != "" {
-		req.Header.Set("X-Actions", n.Actions)
-	}
-	if n.Markdown {
-		req.Header.Set("X-Markdown", "yes")
-	}
-	// Auth: token takes precedence over username/password
-	if n.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+n.Token)
-	} else if n.Username != "" && n.Password != "" {
-		creds := base64.StdEncoding.EncodeToString([]byte(n.Username + ":" + n.Password))
-		req.Header.Set("Authorization", "Basic "+creds)
-	}
+	n.setHeaders(req, title)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

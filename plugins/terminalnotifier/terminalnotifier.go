@@ -96,82 +96,65 @@ path = "terminal-notifier"
 `
 }
 
-func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification) error {
-	tctx := tmpl.BuildContext(notif, n.Vars)
-
-	msgTmpl := n.Message
-	if msgTmpl == "" {
-		msgTmpl = "{{.Message}}"
+func (n *TerminalNotifier) buildArgs(tctx map[string]string) ([]string, error) {
+	type tmplField struct {
+		name, value, fallback, flag string
+		required                    bool
 	}
-	msg, err := tmpl.Render("message", msgTmpl, tctx)
-	if err != nil {
-		return err
-	}
-
-	args := []string{"-message", msg}
-
-	titleTmpl := n.Title
-	if titleTmpl == "" {
-		titleTmpl = "Claude Code ({{.Project}})"
-	}
-	title, err := tmpl.Render("title", titleTmpl, tctx)
-	if err != nil {
-		return err
-	}
-	if title != "" {
-		args = append(args, "-title", title)
+	fields := []tmplField{
+		{"message", n.Message, "{{.Message}}", "-message", true},
+		{"title", n.Title, "Claude Code ({{.Project}})", "-title", false},
+		{"subtitle", n.Subtitle, "", "-subtitle", true},
+		{"group", n.Group, "{{.SessionID}}", "-group", false},
 	}
 
-	if n.Subtitle != "" {
-		subtitle, err := tmpl.Render("subtitle", n.Subtitle, tctx)
-		if err != nil {
-			return err
+	var args []string
+	for _, tf := range fields {
+		tmplStr := tf.value
+		if tmplStr == "" {
+			tmplStr = tf.fallback
 		}
-		args = append(args, "-subtitle", subtitle)
+		if tmplStr == "" {
+			continue
+		}
+
+		result, err := tmpl.Render(tf.name, tmplStr, tctx)
+		if err != nil {
+			return nil, err
+		}
+		if tf.required || result != "" {
+			args = append(args, tf.flag, result)
+		}
 	}
 
-	if n.Sound != "" {
-		args = append(args, "-sound", n.Sound)
+	staticFlags := []struct{ flag, value string }{
+		{"-sound", n.Sound},
+		{"-open", n.Open},
+		{"-execute", n.Execute},
+		{"-activate", n.Activate},
+		{"-sender", n.Sender},
+		{"-appIcon", n.AppIcon},
+		{"-contentImage", n.ContentImage},
 	}
-
-	groupTmpl := n.Group
-	if groupTmpl == "" {
-		groupTmpl = "{{.SessionID}}"
-	}
-	group, err := tmpl.Render("group", groupTmpl, tctx)
-	if err != nil {
-		return err
-	}
-	if group != "" {
-		args = append(args, "-group", group)
-	}
-
-	if n.Open != "" {
-		args = append(args, "-open", n.Open)
-	}
-
-	if n.Execute != "" {
-		args = append(args, "-execute", n.Execute)
-	}
-
-	if n.Activate != "" {
-		args = append(args, "-activate", n.Activate)
-	}
-
-	if n.Sender != "" {
-		args = append(args, "-sender", n.Sender)
-	}
-
-	if n.AppIcon != "" {
-		args = append(args, "-appIcon", n.AppIcon)
-	}
-
-	if n.ContentImage != "" {
-		args = append(args, "-contentImage", n.ContentImage)
+	for _, sf := range staticFlags {
+		if sf.value != "" {
+			args = append(args, sf.flag, sf.value)
+		}
 	}
 
 	if n.IgnoreDnD {
 		args = append(args, "-ignoreDnD")
+	}
+
+	return args, nil
+}
+
+func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification) error {
+	tctx := tmpl.BuildContext(notif, n.Vars)
+
+	args, err := n.buildArgs(tctx)
+	if err != nil {
+		return err
 	}
 
 	cmd := exec.CommandContext(ctx, n.Path, args...)
