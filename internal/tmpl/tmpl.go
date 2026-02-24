@@ -35,7 +35,7 @@ func BuildContext(notif notifier.Notification, vars map[string]string) map[strin
 
 // Render parses and executes a Go text/template against the given data map.
 func Render(name, tmplStr string, data map[string]string) (string, error) {
-	t, err := template.New(name).Parse(tmplStr)
+	t, err := template.New(name).Option("missingkey=error").Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("rendering %s template: %w", name, err)
 	}

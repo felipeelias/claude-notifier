@@ -55,6 +55,13 @@ func TestRender(t *testing.T) {
 	assert.Equal(t, "hello world", result)
 }
 
+func TestRenderMissingKeyErrors(t *testing.T) {
+	data := map[string]string{"Name": "world"}
+	_, err := tmpl.Render("test", "hello {{.Nonexistent}}", data)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "rendering test template")
+}
+
 func TestRenderBadTemplate(t *testing.T) {
 	_, err := tmpl.Render("test", "{{.Invalid", nil)
 	assert.Error(t, err)
