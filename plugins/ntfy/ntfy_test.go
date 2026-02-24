@@ -160,7 +160,7 @@ func TestNtfyTemplateBadTemplate(t *testing.T) {
 		Title:   "{{.Title}}",
 	}
 	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "rendering message template")
 }
 

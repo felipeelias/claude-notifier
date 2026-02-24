@@ -20,7 +20,7 @@ func TestInitCommand(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = os.Stat(configPath)
-	assert.NoError(t, err, "config file should exist")
+	require.NoError(t, err, "config file should exist")
 
 	content, _ := os.ReadFile(configPath)
 	assert.Contains(t, string(content), "[global]")

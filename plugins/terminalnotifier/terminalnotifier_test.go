@@ -207,7 +207,7 @@ func TestSendBadTemplate(t *testing.T) {
 		Message: "{{.Invalid",
 	}
 	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "rendering message template")
 }
 
@@ -217,7 +217,7 @@ func TestSendBinaryNotFound(t *testing.T) {
 		Message: "{{.Message}}",
 	}
 	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "running /nonexistent/terminal-notifier")
 }
 
@@ -231,7 +231,7 @@ func TestSendBinaryNonZeroExit(t *testing.T) {
 		Message: "{{.Message}}",
 	}
 	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "running")
 }
 

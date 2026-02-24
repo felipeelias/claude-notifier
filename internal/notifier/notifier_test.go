@@ -63,14 +63,14 @@ func TestValidateAcceptsEmptyNotification(t *testing.T) {
 func TestValidateRejectsLongMessage(t *testing.T) {
 	n := notifier.Notification{Message: strings.Repeat("a", 4097)}
 	err := n.Validate()
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Message")
 }
 
 func TestValidateRejectsLongTitle(t *testing.T) {
 	n := notifier.Notification{Title: strings.Repeat("a", 257)}
 	err := n.Validate()
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Title")
 }
 
@@ -88,7 +88,7 @@ func TestNotifierInterface(t *testing.T) {
 
 	n := notifier.Notification{Message: "hello"}
 	err := m.Send(context.Background(), n)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, m.sent, 1)
 	assert.Equal(t, "hello", m.sent[0].Message)
 }

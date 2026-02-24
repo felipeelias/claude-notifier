@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -24,16 +25,18 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() { _ = os.RemoveAll(tmp) }()
 
 	testBinary = filepath.Join(tmp, "claude-notifier")
-	build := exec.Command("go", "build", "-o", testBinary, ".")
+	build := exec.CommandContext(context.Background(), "go", "build", "-o", testBinary, ".")
 	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
+		_ = os.RemoveAll(tmp)
 		log.Fatalf("failed to build binary: %v", err)
 	}
 
-	os.Exit(m.Run())
+	code := m.Run()
+	_ = os.RemoveAll(tmp)
+	os.Exit(code)
 }
 
 func TestEndToEnd(t *testing.T) {
@@ -69,7 +72,7 @@ url = "` + srv.URL + `"
 	})
 	require.NoError(t, err)
 
-	cmd := exec.Command(testBinary, "--config", configPath)
+	cmd := exec.CommandContext(context.Background(), testBinary, "--config", configPath)
 	cmd.Stdin = bytes.NewReader(input)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -87,10 +90,12 @@ func TestEndToEndMissingConfig(t *testing.T) {
 	}
 
 	// Run with nonexistent config — should still exit 0 (never fail the hook)
-	input, _ := json.Marshal(map[string]string{"message": "test"})
-	cmd := exec.Command(testBinary, "--config", "/nonexistent/config.toml")
+	input, err := json.Marshal(map[string]string{"message": "test"})
+	require.NoError(t, err)
+
+	cmd := exec.CommandContext(context.Background(), testBinary, "--config", "/nonexistent/config.toml")
 	cmd.Stdin = bytes.NewReader(input)
-	err := cmd.Run()
+	err = cmd.Run()
 	assert.NoError(t, err, "should exit 0 even with missing config")
 }
 
@@ -100,7 +105,7 @@ func TestEndToEndInitCommand(t *testing.T) {
 	}
 
 	configPath := filepath.Join(t.TempDir(), "claude-notifier", "config.toml")
-	cmd := exec.Command(testBinary, "--config", configPath, "init")
+	cmd := exec.CommandContext(context.Background(), testBinary, "--config", configPath, "init")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	err := cmd.Run()
@@ -133,7 +138,7 @@ url = "`+srv.URL+`"
 `), 0644)
 	require.NoError(t, err)
 
-	cmd := exec.Command(testBinary, "--config", configPath, "test")
+	cmd := exec.CommandContext(context.Background(), testBinary, "--config", configPath, "test")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	err = cmd.Run()
@@ -164,11 +169,11 @@ url = "`+srv.URL+`"
 	})
 	require.NoError(t, err)
 
-	cmd := exec.Command(testBinary, "--config", configPath)
+	cmd := exec.CommandContext(context.Background(), testBinary, "--config", configPath)
 	cmd.Stdin = bytes.NewReader(input)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	err = cmd.Run()
-	assert.NoError(t, err, "should exit 0 even with oversized fields")
+	require.NoError(t, err, "should exit 0 even with oversized fields")
 	assert.Contains(t, stderr.String(), "invalid notification")
 }
