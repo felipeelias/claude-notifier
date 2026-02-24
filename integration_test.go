@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -140,4 +141,34 @@ url = "`+srv.URL+`"
 
 	assert.True(t, received, "mock server should have received the test notification")
 	assert.Contains(t, stdout.String(), "Test notification sent successfully")
+}
+
+func TestEndToEndOversizedFieldsExitZero(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("server should not have been contacted")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+	require.NoError(t, os.WriteFile(configPath, []byte(`[[notifiers.ntfy]]
+url = "`+srv.URL+`"
+`), 0644))
+
+	input, err := json.Marshal(map[string]string{
+		"message": strings.Repeat("x", 5000),
+	})
+	require.NoError(t, err)
+
+	cmd := exec.Command(testBinary, "--config", configPath)
+	cmd.Stdin = bytes.NewReader(input)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	assert.NoError(t, err, "should exit 0 even with oversized fields")
+	assert.Contains(t, stderr.String(), "invalid notification")
 }
