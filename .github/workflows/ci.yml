@@ -28,6 +28,12 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265 # v19
 
+  lint-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3
+
   lint-go:
     runs-on: ubuntu-latest
     steps:
