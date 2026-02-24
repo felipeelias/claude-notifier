@@ -6,7 +6,7 @@ import (
 
 	appcli "github.com/felipeelias/claude-notifier/internal/cli"
 
-	// Register plugins via init()
+	// Register plugins via init functions.
 	_ "github.com/felipeelias/claude-notifier/plugins/ntfy"
 	_ "github.com/felipeelias/claude-notifier/plugins/terminalnotifier"
 )

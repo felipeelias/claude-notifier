@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -113,7 +114,7 @@ func initCommand() *ucli.Command {
 				return fmt.Errorf("config already exists at %s", configPath)
 			}
 
-			if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(configPath), 0750); err != nil {
 				return fmt.Errorf("creating config directory: %w", err)
 			}
 
@@ -159,7 +160,7 @@ func testCommand() *ucli.Command {
 				for _, err := range errs {
 					_, _ = fmt.Fprintf(c.App.ErrWriter, "error: %s\n", err)
 				}
-				return fmt.Errorf("some notifiers failed")
+				return errors.New("some notifiers failed")
 			}
 
 			_, _ = fmt.Fprintln(c.App.Writer, "Test notification sent successfully")

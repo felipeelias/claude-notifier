@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -66,8 +67,9 @@ type Configurable interface {
 
 // SampleConfig generates a sample config from all registered plugins.
 func SampleConfig(reg *notifier.Registry) string {
-	s := "# claude-notifier configuration\n\n"
-	s += "[global]\ntimeout = \"10s\"\n\n"
+	var b strings.Builder
+	b.WriteString("# claude-notifier configuration\n\n")
+	b.WriteString("[global]\ntimeout = \"10s\"\n\n")
 
 	all := reg.All()
 	names := make([]string, 0, len(all))
@@ -79,10 +81,11 @@ func SampleConfig(reg *notifier.Registry) string {
 	for _, name := range names {
 		n := all[name]()
 		if c, ok := n.(Configurable); ok {
-			s += c.SampleConfig() + "\n"
+			b.WriteString(c.SampleConfig())
+			b.WriteByte('\n')
 		} else {
-			s += fmt.Sprintf("# [[notifiers.%s]]\n\n", name)
+			fmt.Fprintf(&b, "# [[notifiers.%s]]\n\n", name)
 		}
 	}
-	return s
+	return b.String()
 }

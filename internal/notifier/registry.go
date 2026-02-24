@@ -1,6 +1,9 @@
 package notifier
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 // Factory creates a new Notifier instance with default values.
 type Factory func() Notifier
@@ -28,8 +31,6 @@ func (r *Registry) Register(name string, f Factory) error {
 // All returns a copy of all registered factories.
 func (r *Registry) All() map[string]Factory {
 	cp := make(map[string]Factory, len(r.factories))
-	for k, v := range r.factories {
-		cp[k] = v
-	}
+	maps.Copy(cp, r.factories)
 	return cp
 }
