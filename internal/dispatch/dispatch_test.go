@@ -22,7 +22,7 @@ type mockNotifier struct {
 
 func (m *mockNotifier) Name() string { return m.name }
 
-func (m *mockNotifier) Send(ctx context.Context, n notifier.Notification) error {
+func (m *mockNotifier) Send(ctx context.Context, notif notifier.Notification) error {
 	if m.delay > 0 {
 		select {
 		case <-time.After(m.delay):
@@ -32,29 +32,30 @@ func (m *mockNotifier) Send(ctx context.Context, n notifier.Notification) error 
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.sent = append(m.sent, n)
+	m.sent = append(m.sent, notif)
+
 	return m.sendErr
 }
 
 func TestDispatchToMultiple(t *testing.T) {
-	a := &mockNotifier{name: "a"}
-	b := &mockNotifier{name: "b"}
+	first := &mockNotifier{name: "first"}
+	second := &mockNotifier{name: "second"}
 
-	n := notifier.Notification{Message: "hello"}
-	errs := dispatch.Send(context.Background(), []notifier.Notifier{a, b}, n)
+	notif := notifier.Notification{Message: "hello"}
+	errs := dispatch.Send(context.Background(), []notifier.Notifier{first, second}, notif)
 
 	assert.Empty(t, errs)
-	assert.Len(t, a.sent, 1)
-	assert.Len(t, b.sent, 1)
+	assert.Len(t, first.sent, 1)
+	assert.Len(t, second.sent, 1)
 }
 
 func TestDispatchConcurrent(t *testing.T) {
-	a := &mockNotifier{name: "a", delay: 50 * time.Millisecond}
-	b := &mockNotifier{name: "b", delay: 50 * time.Millisecond}
+	first := &mockNotifier{name: "first", delay: 50 * time.Millisecond}
+	second := &mockNotifier{name: "second", delay: 50 * time.Millisecond}
 
 	start := time.Now()
-	n := notifier.Notification{Message: "hello"}
-	dispatch.Send(context.Background(), []notifier.Notifier{a, b}, n)
+	notif := notifier.Notification{Message: "hello"}
+	dispatch.Send(context.Background(), []notifier.Notifier{first, second}, notif)
 	elapsed := time.Since(start)
 
 	// If concurrent, should complete in ~50ms, not ~100ms
@@ -62,16 +63,16 @@ func TestDispatchConcurrent(t *testing.T) {
 }
 
 func TestDispatchCollectsErrors(t *testing.T) {
-	a := &mockNotifier{name: "a", sendErr: errors.New("fail")}
-	b := &mockNotifier{name: "b"}
+	failing := &mockNotifier{name: "failing", sendErr: errors.New("fail")}
+	working := &mockNotifier{name: "working"}
 
-	n := notifier.Notification{Message: "hello"}
-	errs := dispatch.Send(context.Background(), []notifier.Notifier{a, b}, n)
+	notif := notifier.Notification{Message: "hello"}
+	errs := dispatch.Send(context.Background(), []notifier.Notifier{failing, working}, notif)
 
 	assert.Len(t, errs, 1)
-	assert.Contains(t, errs[0].Error(), "a")
-	// b should still have received the notification
-	assert.Len(t, b.sent, 1)
+	assert.Contains(t, errs[0].Error(), "failing")
+	// working should still have received the notification
+	assert.Len(t, working.sent, 1)
 }
 
 func TestDispatchRespectsTimeout(t *testing.T) {
@@ -80,8 +81,8 @@ func TestDispatchRespectsTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	n := notifier.Notification{Message: "hello"}
-	errs := dispatch.Send(ctx, []notifier.Notifier{slow}, n)
+	notif := notifier.Notification{Message: "hello"}
+	errs := dispatch.Send(ctx, []notifier.Notifier{slow}, notif)
 
 	assert.Len(t, errs, 1)
 	assert.Contains(t, errs[0].Error(), "slow")

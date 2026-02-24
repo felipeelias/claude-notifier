@@ -134,13 +134,13 @@ func TestNtfyTemplateWithVars(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:     srv.URL,
 		Message: "{{.Env}}: {{.Message}}",
 		Title:   "{{.Title}}",
 		Vars:    map[string]string{"env": "production"},
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message: "Task done",
 		Title:   "Claude Code",
 	})
@@ -173,7 +173,7 @@ func TestNtfyAllHeaders(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:      srv.URL,
 		Message:  "{{.Message}}",
 		Title:    "{{.Title}}",
@@ -188,7 +188,7 @@ func TestNtfyAllHeaders(t *testing.T) {
 		Actions:  "view, Open, https://example.com",
 		Markdown: true,
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message: "hi",
 		Title:   "test",
 	})
@@ -215,13 +215,13 @@ func TestNtfyMarkdownDisabled(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:      srv.URL,
 		Message:  "{{.Message}}",
 		Title:    "{{.Title}}",
 		Markdown: false,
 	}
-	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	err := sender.Send(context.Background(), notifier.Notification{Message: "hi"})
 	require.NoError(t, err)
 	assert.Empty(t, gotHeaders.Get("X-Markdown"))
 }
@@ -235,14 +235,14 @@ func TestNtfyBasicAuth(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:      srv.URL,
 		Message:  "{{.Message}}",
 		Title:    "{{.Title}}",
 		Username: "admin",
 		Password: "secret",
 	}
-	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	err := sender.Send(context.Background(), notifier.Notification{Message: "hi"})
 	require.NoError(t, err)
 	// base64("admin:secret") = "YWRtaW46c2VjcmV0"
 	assert.Equal(t, "Basic YWRtaW46c2VjcmV0", gotHeaders.Get("Authorization"))
@@ -257,7 +257,7 @@ func TestNtfyTokenOverridesBasicAuth(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:      srv.URL,
 		Message:  "{{.Message}}",
 		Title:    "{{.Title}}",
@@ -265,7 +265,7 @@ func TestNtfyTokenOverridesBasicAuth(t *testing.T) {
 		Username: "admin",
 		Password: "secret",
 	}
-	err := p.Send(context.Background(), notifier.Notification{Message: "hi"})
+	err := sender.Send(context.Background(), notifier.Notification{Message: "hi"})
 	require.NoError(t, err)
 	assert.Equal(t, "Bearer tk_secret", gotHeaders.Get("Authorization"))
 }
@@ -281,13 +281,13 @@ func TestNtfyVarCollision(t *testing.T) {
 	defer srv.Close()
 
 	// User var "message" (title-cased to "Message") should NOT override the Claude Code field
-	p := &ntfy.Ntfy{
+	sender := &ntfy.Ntfy{
 		URL:     srv.URL,
 		Message: "{{.Message}}",
 		Title:   "{{.Title}}",
 		Vars:    map[string]string{"message": "overridden"},
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message: "original",
 	})
 	require.NoError(t, err)

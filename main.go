@@ -18,7 +18,9 @@ func main() {
 	terminalnotifier.Register(reg)
 
 	app := appcli.New(version, reg)
-	if err := app.Run(os.Args); err != nil {
+
+	err := app.Run(os.Args)
+	if err != nil {
 		slog.Error("fatal", "error", err)
 		os.Exit(1)
 	}

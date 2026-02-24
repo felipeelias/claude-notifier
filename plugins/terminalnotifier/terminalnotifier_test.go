@@ -23,6 +23,7 @@ func fakeBinary(t *testing.T) (string, string) {
 	script := filepath.Join(dir, "terminal-notifier")
 	content := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$@\" > %s\n", logFile)
 	require.NoError(t, os.WriteFile(script, []byte(content), 0755))
+
 	return script, logFile
 }
 
@@ -31,6 +32,7 @@ func readArgs(t *testing.T, logFile string) []string {
 	t.Helper()
 	data, err := os.ReadFile(logFile)
 	require.NoError(t, err)
+
 	return strings.Split(strings.TrimSpace(string(data)), "\n")
 }
 
@@ -59,6 +61,7 @@ func assertArgPair(t *testing.T, args []string, flag, value string) {
 		if arg == flag {
 			require.Less(t, i+1, len(args), "flag %s has no value", flag)
 			assert.Equal(t, value, args[i+1], "flag %s value mismatch", flag)
+
 			return
 		}
 	}
@@ -90,7 +93,7 @@ func TestSend(t *testing.T) {
 func TestSendAllFlags(t *testing.T) {
 	bin, logFile := fakeBinary(t)
 
-	p := &tn.TerminalNotifier{
+	sender := &tn.TerminalNotifier{
 		Path:         bin,
 		Message:      "{{.Message}}",
 		Title:        "{{.Title}}",
@@ -105,7 +108,7 @@ func TestSendAllFlags(t *testing.T) {
 		ContentImage: "/path/to/image.png",
 		IgnoreDnD:    true,
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message: "hi",
 		Title:   "test",
 	})
@@ -165,13 +168,13 @@ func TestSendTemplateRendering(t *testing.T) {
 func TestSendWithVars(t *testing.T) {
 	bin, logFile := fakeBinary(t)
 
-	p := &tn.TerminalNotifier{
+	sender := &tn.TerminalNotifier{
 		Path:    bin,
 		Message: "{{.Env}}: {{.Message}}",
 		Title:   "{{.Title}}",
 		Vars:    map[string]string{"env": "production"},
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message: "done",
 		Title:   "test",
 	})
@@ -238,13 +241,13 @@ func TestSendBinaryNonZeroExit(t *testing.T) {
 func TestSendExecuteAndOpenAreNotTemplated(t *testing.T) {
 	bin, logFile := fakeBinary(t)
 
-	p := &tn.TerminalNotifier{
+	sender := &tn.TerminalNotifier{
 		Path:    bin,
 		Message: "{{.Message}}",
 		Execute: "echo {{.Message}}",
 		Open:    "https://example.com/{{.SessionID}}",
 	}
-	err := p.Send(context.Background(), notifier.Notification{
+	err := sender.Send(context.Background(), notifier.Notification{
 		Message:   "pwned",
 		SessionID: "sess-42",
 	})

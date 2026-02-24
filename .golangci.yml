@@ -3,19 +3,11 @@ version: "2"
 linters:
   default: all
   disable:
-    - cyclop
     - depguard
-    - funlen
     - err113
     - exhaustruct
     - gochecknoglobals
-    - gochecknoinits
-    - mnd
-    - nlreturn
-    - noinlineerr
     - paralleltest
-    - tagliatelle
-    - varnamelen
     - wrapcheck
     - wsl
     - wsl_v5
@@ -26,6 +18,14 @@ linters:
         - G204
         - G304
         - G704
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+    varnamelen:
+      ignore-names:
+        - mu
+        - wg
     revive:
       rules:
         - name: exported

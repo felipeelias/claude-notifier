@@ -11,6 +11,8 @@ import (
 	"github.com/felipeelias/claude-notifier/internal/notifier"
 )
 
+const defaultTimeout = 10 * time.Second
+
 // Global holds top-level configuration.
 type Global struct {
 	Timeout time.Duration `toml:"timeout"`
@@ -25,19 +27,19 @@ type Config struct {
 
 // Load reads and parses a TOML config file.
 func Load(path string) (*Config, error) {
-	f, err := os.Open(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
-	defer func() { _ = f.Close() }()
+	defer func() { _ = file.Close() }()
 
 	cfg := &Config{
 		Global: Global{
-			Timeout: 10 * time.Second,
+			Timeout: defaultTimeout,
 		},
 	}
 
-	meta, err := toml.NewDecoder(f).Decode(cfg)
+	meta, err := toml.NewDecoder(file).Decode(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
@@ -57,6 +59,7 @@ func DefaultPath() string {
 	if err != nil {
 		dir = os.ExpandEnv("$HOME/.config")
 	}
+
 	return dir + "/claude-notifier/config.toml"
 }
 
@@ -67,9 +70,9 @@ type Configurable interface {
 
 // SampleConfig generates a sample config from all registered plugins.
 func SampleConfig(reg *notifier.Registry) string {
-	var b strings.Builder
-	b.WriteString("# claude-notifier configuration\n\n")
-	b.WriteString("[global]\ntimeout = \"10s\"\n\n")
+	var buf strings.Builder
+	buf.WriteString("# claude-notifier configuration\n\n")
+	buf.WriteString("[global]\ntimeout = \"10s\"\n\n")
 
 	all := reg.All()
 	names := make([]string, 0, len(all))
@@ -79,13 +82,14 @@ func SampleConfig(reg *notifier.Registry) string {
 	sort.Strings(names)
 
 	for _, name := range names {
-		n := all[name]()
-		if c, ok := n.(Configurable); ok {
-			b.WriteString(c.SampleConfig())
-			b.WriteByte('\n')
+		notif := all[name]()
+		if conf, ok := notif.(Configurable); ok {
+			buf.WriteString(conf.SampleConfig())
+			buf.WriteByte('\n')
 		} else {
-			fmt.Fprintf(&b, "# [[notifiers.%s]]\n\n", name)
+			fmt.Fprintf(&buf, "# [[notifiers.%s]]\n\n", name)
 		}
 	}
-	return b.String()
+
+	return buf.String()
 }

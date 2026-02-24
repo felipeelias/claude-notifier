@@ -25,6 +25,7 @@ func (r *Registry) Register(name string, f Factory) error {
 		return fmt.Errorf("notifier %q already registered", name)
 	}
 	r.factories[name] = f
+
 	return nil
 }
 
@@ -32,5 +33,6 @@ func (r *Registry) Register(name string, f Factory) error {
 func (r *Registry) All() map[string]Factory {
 	cp := make(map[string]Factory, len(r.factories))
 	maps.Copy(cp, r.factories)
+
 	return cp
 }

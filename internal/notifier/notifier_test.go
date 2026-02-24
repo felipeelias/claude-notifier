@@ -18,8 +18,9 @@ type mockNotifier struct {
 
 func (m *mockNotifier) Name() string { return m.name }
 
-func (m *mockNotifier) Send(ctx context.Context, n notifier.Notification) error {
+func (m *mockNotifier) Send(_ context.Context, n notifier.Notification) error {
 	m.sent = append(m.sent, n)
+
 	return nil
 }
 
@@ -32,19 +33,19 @@ func TestNotificationJSON(t *testing.T) {
 		"session_id":"abc123",
 		"transcript_path":"/home/user/.claude/transcript.jsonl"
 	}`
-	var n notifier.Notification
-	require.NoError(t, json.Unmarshal([]byte(raw), &n))
-	assert.Equal(t, "Task complete", n.Message)
-	assert.Equal(t, "Claude Code", n.Title)
-	assert.Equal(t, "/home/user/project", n.Cwd)
-	assert.Equal(t, "idle_prompt", n.NotificationType)
-	assert.Equal(t, "abc123", n.SessionID)
-	assert.Equal(t, "/home/user/.claude/transcript.jsonl", n.TranscriptPath)
-	assert.Equal(t, "project", n.Project())
+	var notif notifier.Notification
+	require.NoError(t, json.Unmarshal([]byte(raw), &notif))
+	assert.Equal(t, "Task complete", notif.Message)
+	assert.Equal(t, "Claude Code", notif.Title)
+	assert.Equal(t, "/home/user/project", notif.Cwd)
+	assert.Equal(t, "idle_prompt", notif.NotificationType)
+	assert.Equal(t, "abc123", notif.SessionID)
+	assert.Equal(t, "/home/user/.claude/transcript.jsonl", notif.TranscriptPath)
+	assert.Equal(t, "project", notif.Project())
 }
 
 func TestValidateAcceptsNormalNotification(t *testing.T) {
-	n := notifier.Notification{
+	notif := notifier.Notification{
 		Message:          "Task complete",
 		Title:            "Claude Code",
 		Cwd:              "/home/user/project",
@@ -52,7 +53,7 @@ func TestValidateAcceptsNormalNotification(t *testing.T) {
 		SessionID:        "abc123",
 		TranscriptPath:   "/home/user/.claude/transcript.jsonl",
 	}
-	assert.NoError(t, n.Validate())
+	assert.NoError(t, notif.Validate())
 }
 
 func TestValidateAcceptsEmptyNotification(t *testing.T) {
@@ -83,12 +84,12 @@ func TestValidateAcceptsAtExactLimit(t *testing.T) {
 }
 
 func TestNotifierInterface(t *testing.T) {
-	m := &mockNotifier{name: "mock"}
-	var _ notifier.Notifier = m // compile-time interface check
+	mock := &mockNotifier{name: "mock"}
+	var _ notifier.Notifier = mock // compile-time interface check
 
-	n := notifier.Notification{Message: "hello"}
-	err := m.Send(context.Background(), n)
+	notif := notifier.Notification{Message: "hello"}
+	err := mock.Send(context.Background(), notif)
 	require.NoError(t, err)
-	assert.Len(t, m.sent, 1)
-	assert.Equal(t, "hello", m.sent[0].Message)
+	assert.Len(t, mock.sent, 1)
+	assert.Equal(t, "hello", mock.sent[0].Message)
 }

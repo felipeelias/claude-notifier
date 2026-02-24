@@ -96,6 +96,23 @@ path = "terminal-notifier"
 `
 }
 
+func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification) error {
+	tctx := tmpl.BuildContext(notif, n.Vars)
+
+	args, err := n.buildArgs(tctx)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, n.Path, args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("running %s: %s: %w", n.Path, string(output), err)
+	}
+
+	return nil
+}
+
 func (n *TerminalNotifier) buildArgs(tctx map[string]string) ([]string, error) {
 	type tmplField struct {
 		name, value, fallback, flag string
@@ -109,21 +126,21 @@ func (n *TerminalNotifier) buildArgs(tctx map[string]string) ([]string, error) {
 	}
 
 	var args []string
-	for _, tf := range fields {
-		tmplStr := tf.value
+	for _, field := range fields {
+		tmplStr := field.value
 		if tmplStr == "" {
-			tmplStr = tf.fallback
+			tmplStr = field.fallback
 		}
 		if tmplStr == "" {
 			continue
 		}
 
-		result, err := tmpl.Render(tf.name, tmplStr, tctx)
+		result, err := tmpl.Render(field.name, tmplStr, tctx)
 		if err != nil {
 			return nil, err
 		}
-		if tf.required || result != "" {
-			args = append(args, tf.flag, result)
+		if field.required || result != "" {
+			args = append(args, field.flag, result)
 		}
 	}
 
@@ -147,23 +164,6 @@ func (n *TerminalNotifier) buildArgs(tctx map[string]string) ([]string, error) {
 	}
 
 	return args, nil
-}
-
-func (n *TerminalNotifier) Send(ctx context.Context, notif notifier.Notification) error {
-	tctx := tmpl.BuildContext(notif, n.Vars)
-
-	args, err := n.buildArgs(tctx)
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.CommandContext(ctx, n.Path, args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("running %s: %s: %w", n.Path, string(output), err)
-	}
-
-	return nil
 }
 
 // Register adds terminal-notifier to the given plugin registry.

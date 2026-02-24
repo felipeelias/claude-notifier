@@ -10,25 +10,28 @@ import (
 
 // Send dispatches a notification to all notifiers concurrently.
 // Returns a slice of errors from notifiers that failed.
-func Send(ctx context.Context, notifiers []notifier.Notifier, n notifier.Notification) []error {
+func Send(ctx context.Context, notifiers []notifier.Notifier, notif notifier.Notification) []error {
 	var (
 		mu   sync.Mutex
 		errs []error
 		wg   sync.WaitGroup
 	)
 
-	for _, nr := range notifiers {
+	for _, dest := range notifiers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := nr.Send(ctx, n); err != nil {
+
+			err := dest.Send(ctx, notif)
+			if err != nil {
 				mu.Lock()
-				errs = append(errs, fmt.Errorf("%s: %w", nr.Name(), err))
+				errs = append(errs, fmt.Errorf("%s: %w", dest.Name(), err))
 				mu.Unlock()
 			}
 		}()
 	}
 
 	wg.Wait()
+
 	return errs
 }

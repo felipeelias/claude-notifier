@@ -29,7 +29,9 @@ func TestMain(m *testing.M) {
 	testBinary = filepath.Join(tmp, "claude-notifier")
 	build := exec.CommandContext(context.Background(), "go", "build", "-o", testBinary, ".")
 	build.Stderr = os.Stderr
-	if err := build.Run(); err != nil {
+
+	err = build.Run()
+	if err != nil {
 		_ = os.RemoveAll(tmp)
 		log.Fatalf("failed to build binary: %v", err)
 	}

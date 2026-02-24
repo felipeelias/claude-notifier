@@ -21,27 +21,31 @@ func BuildContext(notif notifier.Notification, vars map[string]string) map[strin
 		"SessionID":        notif.SessionID,
 		"TranscriptPath":   notif.TranscriptPath,
 	}
-	for k, v := range vars {
+	for k, val := range vars {
 		if k == "" {
 			continue
 		}
 		key := strings.ToUpper(k[:1]) + k[1:]
 		if _, exists := ctx[key]; !exists {
-			ctx[key] = v
+			ctx[key] = val
 		}
 	}
+
 	return ctx
 }
 
 // Render parses and executes a Go text/template against the given data map.
 func Render(name, tmplStr string, data map[string]string) (string, error) {
-	t, err := template.New(name).Option("missingkey=error").Parse(tmplStr)
+	tmpl, err := template.New(name).Option("missingkey=error").Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("rendering %s template: %w", name, err)
 	}
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
+
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
 		return "", fmt.Errorf("rendering %s template: %w", name, err)
 	}
+
 	return buf.String(), nil
 }

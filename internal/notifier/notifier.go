@@ -28,7 +28,7 @@ func (n Notification) Validate() error {
 		value string
 		max   int
 	}
-	for _, c := range []limit{
+	for _, check := range []limit{
 		{"Message", n.Message, 4096},
 		{"Title", n.Title, 256},
 		{"Cwd", n.Cwd, 4096},
@@ -36,10 +36,11 @@ func (n Notification) Validate() error {
 		{"SessionID", n.SessionID, 128},
 		{"TranscriptPath", n.TranscriptPath, 4096},
 	} {
-		if len(c.value) > c.max {
-			return fmt.Errorf("field %s exceeds maximum length (%d > %d)", c.name, len(c.value), c.max)
+		if len(check.value) > check.max {
+			return fmt.Errorf("field %s exceeds maximum length (%d > %d)", check.name, len(check.value), check.max)
 		}
 	}
+
 	return nil
 }
 
