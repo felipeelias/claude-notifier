@@ -1,6 +1,6 @@
 ---
 name: release
-description: Use when the user asks to create a new release, bump the version, publish, or ship a new version
+description: Create a new GitHub release with goreleaser
 disable-model-invocation: true
 allowed-tools: Bash(gh *), Bash(git log *), Bash(git describe *)
 ---
